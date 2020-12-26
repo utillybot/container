@@ -15,13 +15,12 @@ COPY ["utilly/package.json", "utilly/package-lock.json", "utilly/lerna.json", ".
 
 # Copy the entire packages folder and remove anything that isn't a package.json file
 COPY utilly/packages packages
-RUN find utilly/packages -mindepth 2 -maxdepth 2 ! \( -name "package.json" -o -name "package-lock.json" \) -print | xargs rm -rf
-
+RUN find packages -mindepth 2 -maxdepth 2 ! \( -name "package.json" -o -name "package-lock.json" \) -print | xargs rm -rf
 
 # Build step 2
 FROM node:15
 
-# Copy files from previous build step aka the package jsons
+# Move over package.json files. This build step enables caching
 WORKDIR /app/utilly
 COPY --from=1 /app/utilly .
 
@@ -37,13 +36,10 @@ RUN npx lerna bootstrap --ci
 
 # Set production to run a production build
 ENV NODE_ENV=production
-
 RUN npm run build
-
 RUN npm prune
 
 ENV BASE_WEB_URL=/app/web
-
 COPY --from=0 /temp/web/dist /app/web
 
 CMD npm run run
