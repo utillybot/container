@@ -1,6 +1,6 @@
 [submodule "utilly"]
 	path = utilly
-	url = https://github.com/utillybot/utilly
+	url = git@github.com:utillybot/utilly.git
 [submodule "web"]
 	path = web
-	url = https://github.com/utillybot/web
+	url = git@github.com:utillybot/web.git
