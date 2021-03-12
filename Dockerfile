@@ -1,4 +1,6 @@
+# ------------------------------
 # Build frontend
+
 FROM node:15
 WORKDIR /temp/web
 COPY ["web/package.json", "web/package-lock.json", "./"]
@@ -6,7 +8,17 @@ RUN npm ci
 COPY web .
 RUN npm run build
 
-# Build backend
+# ------------------------------
+# Build server
+
+FROM golang:1.16
+WORKDIR /temp/server
+COPY ["server", "./"]
+RUN go build -o ./dist/main main.go
+
+# ------------------------------
+# Build bot
+
 FROM node:15
 
 # Copy package jsons for caching
@@ -22,7 +34,7 @@ FROM node:15
 
 # Move over package.json files. This build step enables caching
 WORKDIR /app/utilly
-COPY --from=1 /app/utilly .
+COPY --from=2 /app/utilly .
 
 # Install dependencies
 RUN npm ci
@@ -41,5 +53,10 @@ RUN npm prune
 
 ENV BASE_WEB_URL=/app/web
 COPY --from=0 /temp/web/dist /app/web
+COPY --from=1 /temp/server/dist /app/server
 
-CMD npm run run
+# Supervisor config
+COPY --from=ochinchina/supervisord:latest /usr/local/bin/supervisord /usr/local/bin/supervisord
+COPY supervisor.conf /etc/supervisord.conf
+CMD ["supervisord"]
+

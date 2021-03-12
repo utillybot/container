@@ -4,34 +4,35 @@ on:
   push:
     branches: [ master ]
 
-  workflow_dispatch: 
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    
+
     env:
-      GIT_SSH_COMMAND: ./.github/scripts/ssh-deploy-key-wrapper.sh 
-      
+      GIT_SSH_COMMAND: ./.github/scripts/ssh-deploy-key-wrapper.sh
+
     steps:
       - uses: webfactory/ssh-agent@v0.4.1
         with:
             ssh-private-key: |
+                  ${{ secrets.SERVER_SSH_KEY }}
                   ${{ secrets.WEB_SSH_KEY }}
                   ${{ secrets.UTILLY_SSH_KEY }}
       - uses: actions/checkout@v2
       - name: Change permissions for bash file
-        run: chmod 755 ./.github/scripts/ssh-deploy-key-wrapper.sh 
+        run: chmod 755 ./.github/scripts/ssh-deploy-key-wrapper.sh
       - name: Checkout submodules
         run: git submodule update --init --recursive
       - name: Login to Heroku Container registry
-        env: 
-          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}  
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
         run: heroku container:login
       - name: Build and push
         env:
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
-        run: heroku container:push -a utillybot web 
+        run: heroku container:push -a utillybot web
       - name: Release
         env:
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
